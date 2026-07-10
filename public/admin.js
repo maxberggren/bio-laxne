@@ -9,6 +9,7 @@ let scanTimer;
 let stream;
 
 const formatter = new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+setScreeningDefaults();
 
 async function checkSession() {
   const { authenticated } = await fetch('/api/admin/session').then((response) => response.json());
@@ -47,16 +48,20 @@ screeningForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = screeningForm.querySelector('button[type="submit"]');
   const error = screeningForm.querySelector('.form-error');
-  const data = new FormData(screeningForm);
-  data.set('startsAt', new Date(screeningForm.startsAt.value).toISOString());
   button.disabled = true;
   error.textContent = '';
   try {
+    const startsAt = new Date(`${screeningForm.screeningDate.value}T${screeningForm.screeningTime.value}`);
+    if (Number.isNaN(startsAt.getTime())) throw new Error('Välj både datum och starttid.');
+    const data = new FormData(screeningForm);
+    data.delete('screeningDate');
+    data.delete('screeningTime');
+    data.set('startsAt', startsAt.toISOString());
     const response = await fetch('/api/admin/screenings', { method: 'POST', body: data });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error);
     screeningForm.reset();
-    screeningForm.runtime.value = 90;
+    setScreeningDefaults();
     document.querySelector('#poster-name').textContent = 'Välj bild, max 8 MB';
     await loadAdminScreenings();
   } catch (failure) {
@@ -66,13 +71,25 @@ screeningForm.addEventListener('submit', async (event) => {
   }
 });
 
+function setScreeningDefaults() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  const day = String(tomorrow.getDate()).padStart(2, '0');
+  screeningForm.screeningDate.min = `${year}-${month}-${day}`;
+  screeningForm.screeningDate.value = `${year}-${month}-${day}`;
+  screeningForm.screeningTime.value = '19:00';
+  screeningForm.runtime.value = 90;
+}
+
 async function loadAdminScreenings() {
   const response = await fetch('/api/admin/screenings');
   if (response.status === 401) return;
   const screenings = await response.json();
   document.querySelector('#admin-screenings').innerHTML = screenings.map((item) => `<article class="admin-screening">
     <img src="${escapeHtml(item.posterUrl)}" alt="">
-    <div><h3>${escapeHtml(item.title)}</h3><p>${formatter.format(new Date(item.startsAt))} · ${item.runtime} min</p></div>
+    <div><h3>${escapeHtml(item.title)}</h3><p>${formatter.format(new Date(item.startsAt))} · ${item.runtime} min${item.price === null ? ' · fri entré' : ` · ${item.price} kr`}</p></div>
     <span class="seat-count">${item.bookedSeats.length} av 4 bokade</span>
   </article>`).join('') || '<p>Inga visningar ännu.</p>';
 }

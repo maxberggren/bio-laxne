@@ -27,6 +27,7 @@ db.exec(`
     synopsis TEXT NOT NULL DEFAULT '',
     starts_at TEXT NOT NULL,
     runtime INTEGER NOT NULL DEFAULT 100,
+    price INTEGER,
     poster_url TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
@@ -50,6 +51,10 @@ db.exec(`
   );
 `);
 
+if (!db.prepare('PRAGMA table_info(screenings)').all().some((column) => column.name === 'price')) {
+  db.exec('ALTER TABLE screenings ADD COLUMN price INTEGER');
+}
+
 function setting(key, create) {
   const existing = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
   if (existing) return existing.value;
@@ -65,16 +70,16 @@ webpush.setVapidDetails(process.env.VAPID_EMAIL || 'mailto:bio@laxne.se', vapid.
 
 const screeningCount = db.prepare('SELECT COUNT(*) AS count FROM screenings').get().count;
 if (!screeningCount && process.env.NODE_ENV !== 'test') {
-  const insert = db.prepare('INSERT INTO screenings (title, synopsis, starts_at, runtime, poster_url) VALUES (?, ?, ?, ?, ?)');
+  const insert = db.prepare('INSERT INTO screenings (title, synopsis, starts_at, runtime, price, poster_url) VALUES (?, ?, ?, ?, ?, ?)');
   const upcoming = (days, hour) => {
     const date = new Date();
     date.setDate(date.getDate() + days);
     date.setHours(hour, 0, 0, 0);
     return date.toISOString();
   };
-  insert.run('Månskenståget', 'Ett nattligt äventyr genom skogar, stjärnor och glömda stationer.', upcoming(2, 19), 92, '/posters/moon-train.svg');
-  insert.run('Havet under oss', 'En varm berättelse om vänskap, mod och hemligheter på havets botten.', upcoming(5, 18), 104, '/posters/deep-sea.svg');
-  insert.run('Rymdposten', 'Universums minsta brevbärare får sitt livs allra största uppdrag.', upcoming(8, 20), 88, '/posters/space-post.svg');
+  insert.run('Månskenståget', 'Ett nattligt äventyr genom skogar, stjärnor och glömda stationer.', upcoming(2, 19), 92, 80, '/posters/moon-train.svg');
+  insert.run('Havet under oss', 'En varm berättelse om vänskap, mod och hemligheter på havets botten.', upcoming(5, 18), 104, 100, '/posters/deep-sea.svg');
+  insert.run('Rymdposten', 'Universums minsta brevbärare får sitt livs allra största uppdrag.', upcoming(8, 20), 88, null, '/posters/space-post.svg');
 }
 
 const app = express();
@@ -125,6 +130,7 @@ function publicScreenings(includePast = false) {
     synopsis: row.synopsis,
     startsAt: row.starts_at,
     runtime: row.runtime,
+    price: row.price,
     posterUrl: row.poster_url,
     bookedSeats: row.booked_seats ? row.booked_seats.split(',').map(Number) : []
   }));
@@ -197,16 +203,36 @@ app.post('/api/bookings', async (req, res) => {
     throw error;
   }
 
-  const qrDataUrl = await QRCode.toDataURL(ticketToken, { width: 720, margin: 2, color: { dark: '#24130f', light: '#fffaf0' }, errorCorrectionLevel: 'M' });
+  const qrDataUrl = await ticketQr(ticketToken);
   void notify('admin', 'Ny bokning i Bio Laxne', `${guestName} bokade stol ${seat} till ${screening.title}.`, '/admin.html');
   res.status(201).json({
     ticketToken,
     qrDataUrl,
-    screening: { title: screening.title, startsAt: screening.starts_at },
+    screening: { title: screening.title, startsAt: screening.starts_at, price: screening.price },
     seat,
     guestName
   });
 });
+
+app.post('/api/tickets/recover', async (req, res) => {
+  const tokens = Array.isArray(req.body.tokens) ? req.body.tokens.filter((token) => typeof token === 'string').slice(0, 20) : [];
+  if (!tokens.length) return res.json([]);
+  const getTicket = db.prepare(`SELECT b.ticket_token, b.guest_name, b.seat, s.title, s.starts_at, s.price
+    FROM bookings b JOIN screenings s ON s.id = b.screening_id WHERE b.ticket_token = ?`);
+  const rows = tokens.map((token) => getTicket.get(token)).filter(Boolean).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const tickets = await Promise.all(rows.map(async (row) => ({
+    ticketToken: row.ticket_token,
+    qrDataUrl: await ticketQr(row.ticket_token),
+    guestName: row.guest_name,
+    seat: row.seat,
+    screening: { title: row.title, startsAt: row.starts_at, price: row.price }
+  })));
+  res.json(tickets);
+});
+
+function ticketQr(token) {
+  return QRCode.toDataURL(token, { width: 720, margin: 2, color: { dark: '#24130f', light: '#fffaf0' }, errorCorrectionLevel: 'M' });
+}
 
 app.post('/api/admin/login', (req, res) => {
   const expected = process.env.ADMIN_PASSWORD || 'biolaxne';
@@ -239,12 +265,13 @@ app.post('/api/admin/screenings', requireAdmin, upload.single('poster'), async (
   const synopsis = String(req.body.synopsis || '').trim().slice(0, 600);
   const startsAt = new Date(req.body.startsAt);
   const runtime = Number(req.body.runtime);
-  if (!title || Number.isNaN(startsAt.getTime()) || startsAt <= new Date() || !Number.isInteger(runtime) || runtime < 20 || runtime > 400 || !req.file) {
+  const price = req.body.price === undefined || req.body.price === '' ? null : Number(req.body.price);
+  if (!title || Number.isNaN(startsAt.getTime()) || startsAt <= new Date() || !Number.isInteger(runtime) || runtime < 20 || runtime > 400 || (price !== null && (!Number.isInteger(price) || price < 0 || price > 10000)) || !req.file) {
     if (req.file) fs.unlinkSync(req.file.path);
     return res.status(400).json({ error: 'Fyll i titel, framtida starttid, speltid och affisch.' });
   }
-  const result = db.prepare('INSERT INTO screenings (title, synopsis, starts_at, runtime, poster_url) VALUES (?, ?, ?, ?, ?)')
-    .run(title, synopsis, startsAt.toISOString(), runtime, `/uploads/${req.file.filename}`);
+  const result = db.prepare('INSERT INTO screenings (title, synopsis, starts_at, runtime, price, poster_url) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(title, synopsis, startsAt.toISOString(), runtime, price, `/uploads/${req.file.filename}`);
   void notify('guest', 'Ny film på Bio Laxne!', `${title} går nu att boka. Bara fyra stolar - först till kvarn!`, '/');
   res.status(201).json({ id: Number(result.lastInsertRowid) });
 });

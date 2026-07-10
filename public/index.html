@@ -17,7 +17,10 @@
       <span class="brand-mark">BL</span>
       <span><b>BIO LAXNE</b><small>Fyra stolar. Oändliga världar.</small></span>
     </a>
-    <a class="host-link" href="/admin.html">Värdingång</a>
+    <div class="header-actions">
+      <button id="saved-tickets-button" class="tickets-link">Mina biljetter</button>
+      <a class="host-link" href="/admin.html">Värdingång</a>
+    </div>
   </header>
 
   <main>
@@ -40,6 +43,12 @@
       <div id="screenings" class="film-carousel" aria-live="polite">
         <div class="loading-ticket">Ridån går strax upp...</div>
       </div>
+    </section>
+
+    <section class="payment-note" aria-labelledby="payment-title">
+      <span class="swish-mark">S</span>
+      <div><p class="eyebrow">Betala när du kommer</p><h2 id="payment-title">Swisha i entrén</h2></div>
+      <p>Bokningen reserverar din stol. Om visningen har ett biljettpris betalar du enkelt med Swish när du kommer till Bio Laxne.</p>
     </section>
 
     <section class="house-note">
@@ -76,11 +85,19 @@
     </form>
   </dialog>
 
+  <dialog id="saved-tickets-dialog" class="paper-dialog saved-tickets-dialog">
+    <button class="dialog-close" aria-label="Stäng">×</button>
+    <p class="eyebrow">Sparade på den här enheten</p>
+    <h2>Mina biljetter</h2>
+    <p>Öppna en biljett igen för att visa eller ladda ner den. Biljetterna finns kvar här på enheten där du bokade.</p>
+    <div id="saved-tickets-list" class="saved-tickets-list"></div>
+  </dialog>
+
   <dialog id="ticket-dialog" class="ticket-dialog">
     <button class="dialog-close light" aria-label="Stäng">×</button>
     <p class="eyebrow">Din plats i mörkret</p>
     <h2>Biljetten är klar!</h2>
-    <p class="save-warning">Spara bilden nu. Du behöver visa QR-koden i dörren för att komma in.</p>
+    <p class="save-warning">Spara bilden nu. Du behöver visa QR-koden i dörren. Om du glömmer kan du hämta den igen under Mina biljetter.</p>
     <canvas id="ticket-canvas" width="800" height="1280" aria-label="Din Bio Laxne-biljett"></canvas>
     <a id="download-ticket" class="button button-wide" download="bio-laxne-biljett.png">Spara biljett som bild</a>
     <button id="share-ticket" class="text-button hidden">Dela biljett</button>

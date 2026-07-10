@@ -61,14 +61,18 @@
             <label>Filmens titel<input name="title" required maxlength="120"></label>
             <label>En lockande rad<textarea name="synopsis" rows="3" maxlength="600"></textarea></label>
             <div class="form-row">
-              <label>Datum & tid<input name="startsAt" type="datetime-local" required></label>
-              <label>Minuter<input name="runtime" type="number" min="20" max="400" value="90" required></label>
+              <label>Datum<input name="screeningDate" type="date" required></label>
+              <label>Starttid<input name="screeningTime" type="time" value="19:00" step="900" required></label>
+            </div>
+            <div class="form-row">
+              <label>Speltid i minuter<input name="runtime" type="number" min="20" max="400" value="90" required></label>
+              <label>Pris i kr (valfritt)<input name="price" type="number" min="0" max="10000" step="1" placeholder="Fri entré"></label>
             </div>
             <label class="poster-drop">Filmaffisch
               <input name="poster" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required>
               <span id="poster-name">Välj bild, max 8 MB</span>
             </label>
-            <button class="button button-wide">Tänd upp på programmet</button>
+            <button class="button button-wide" type="submit">Tänd upp på programmet</button>
             <p class="form-error" role="alert"></p>
           </form>
         </section>

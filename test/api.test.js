@@ -37,6 +37,7 @@ test('admin can publish a screening with an uploaded poster', async () => {
     .field('synopsis', 'Ett test bakom ridån.')
     .field('startsAt', startsAt)
     .field('runtime', '90')
+    .field('price', '120')
     .attach('poster', Buffer.from('fake image data'), { filename: 'poster.png', contentType: 'image/png' })
     .expect(201);
   screeningId = response.body.id;
@@ -44,6 +45,7 @@ test('admin can publish a screening with an uploaded poster', async () => {
 
   const list = await request(app).get('/api/screenings').expect(200);
   assert.equal(list.body[0].title, 'Testfilmen');
+  assert.equal(list.body[0].price, 120);
   assert.deepEqual(list.body[0].bookedSeats, []);
 });
 
@@ -52,6 +54,7 @@ test('booking is created with a QR ticket and the same seat cannot be double-boo
   ticketToken = response.body.ticketToken;
   assert.match(response.body.qrDataUrl, /^data:image\/png;base64,/);
   assert.equal(response.body.seat, 2);
+  assert.equal(response.body.screening.price, 120);
 
   const conflict = await request(app).post('/api/bookings').send({ screeningId, seat: 2, guestName: 'Grace Hopper' }).expect(409);
   assert.match(conflict.body.error, /stolen/);
@@ -73,6 +76,14 @@ test('a push subscription can be linked to an existing booking for reminders', a
   const linked = await request(app).post('/api/push/link-bookings').send({ endpoint: subscription.endpoint, tokens: [ticketToken] }).expect(200);
   assert.equal(linked.body.linked, 1);
   assert.equal(db.prepare('SELECT subscription_endpoint FROM bookings WHERE ticket_token = ?').get(ticketToken).subscription_endpoint, subscription.endpoint);
+});
+
+test('a saved ticket token can fetch the ticket again', async () => {
+  const response = await request(app).post('/api/tickets/recover').send({ tokens: [ticketToken] }).expect(200);
+  assert.equal(response.body.length, 1);
+  assert.equal(response.body[0].guestName, 'Ada Lovelace');
+  assert.equal(response.body[0].screening.price, 120);
+  assert.match(response.body[0].qrDataUrl, /^data:image\/png;base64,/);
 });
 
 test('unknown tickets are invalid', async () => {

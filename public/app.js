@@ -2,10 +2,12 @@ const screeningsEl = document.querySelector('#screenings');
 const bookingDialog = document.querySelector('#booking-dialog');
 const bookingForm = document.querySelector('#booking-form');
 const ticketDialog = document.querySelector('#ticket-dialog');
+const savedTicketsDialog = document.querySelector('#saved-tickets-dialog');
 const installCard = document.querySelector('#install-card');
 const installButton = document.querySelector('#install-button');
 const notifyButton = document.querySelector('#notify-button');
 let screenings = [];
+let recoveredTickets = [];
 let deferredInstall;
 
 const formatter = new Intl.DateTimeFormat('sv-SE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -33,7 +35,7 @@ function renderScreenings() {
         <img class="poster" src="${escapeHtml(screening.posterUrl)}" alt="Affisch för ${escapeHtml(screening.title)}">
         <span class="availability">${remaining ? `${remaining} ${remaining === 1 ? 'plats' : 'platser'} kvar` : 'Fullsatt'}</span>
       </div>
-      <div class="film-meta"><time datetime="${screening.startsAt}">${formatter.format(new Date(screening.startsAt))}</time><span>${screening.runtime} min</span></div>
+      <div class="film-meta"><time datetime="${screening.startsAt}">${formatter.format(new Date(screening.startsAt))}</time><span>${screening.runtime} min · ${priceLabel(screening.price)}</span></div>
       <h3>${escapeHtml(screening.title)}</h3>
       <p class="synopsis">${escapeHtml(screening.synopsis)}</p>
       <p class="seat-label">Tryck på din stol</p>
@@ -51,7 +53,7 @@ screeningsEl.addEventListener('click', (event) => {
   bookingForm.reset();
   bookingForm.screeningId.value = screening.id;
   bookingForm.seat.value = button.dataset.seat;
-  document.querySelector('#booking-summary').innerHTML = `<p class="eyebrow">En av fyra</p><h2>${escapeHtml(screening.title)}</h2><p class="booking-details">${formatter.format(new Date(screening.startsAt))} · <b>Stol ${button.dataset.seat}</b></p>`;
+  document.querySelector('#booking-summary').innerHTML = `<p class="eyebrow">En av fyra</p><h2>${escapeHtml(screening.title)}</h2><p class="booking-details">${formatter.format(new Date(screening.startsAt))} · <b>Stol ${button.dataset.seat}</b> · ${priceLabel(screening.price)}<br>Eventuellt biljettpris betalas med Swish i entrén.</p>`;
   bookingDialog.showModal();
   setTimeout(() => bookingForm.guestName.focus(), 50);
 });
@@ -75,7 +77,7 @@ bookingForm.addEventListener('submit', async (event) => {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error);
-    const savedTickets = JSON.parse(localStorage.getItem('bioTickets') || '[]');
+    const savedTickets = getSavedTokens();
     localStorage.setItem('bioTickets', JSON.stringify([...savedTickets, result.ticketToken].slice(-20)));
     bookingDialog.close();
     await drawTicket(result);
@@ -123,6 +125,9 @@ async function drawTicket(ticket) {
   context.fillStyle = '#704d3a';
   context.font = 'bold 23px Arial';
   context.fillText(formatter.format(new Date(ticket.screening.startsAt)).toUpperCase(), 400, 310);
+  context.font = 'bold 18px Arial';
+  context.fillStyle = '#681b25';
+  context.fillText(ticket.screening.price === null || ticket.screening.price === undefined ? 'FRI ENTRÉ' : `${ticket.screening.price} KR · BETALAS MED SWISH I ENTRÉN`, 400, 337);
 
   context.fillStyle = '#681b25';
   context.fillRect(75, 348, 650, 120);
@@ -145,7 +150,7 @@ async function drawTicket(ticket) {
   context.fillText('Spara biljetten - den är din nyckel in i mörkret.', 400, 1095);
   context.font = '17px Arial';
   context.fillStyle = '#76513b';
-  context.fillText('ENDAST GILTIG EN GÅNG', 400, 1170);
+  context.fillText('ENDAST GILTIG EN GÅNG · SPARAD I MINA BILJETTER', 400, 1170);
 
   const url = canvas.toDataURL('image/png');
   document.querySelector('#download-ticket').href = url;
@@ -170,6 +175,50 @@ function fitText(context, text, x, y, size, maxWidth) {
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
 }
+
+function priceLabel(price) {
+  return price === null || price === undefined ? 'fri entré' : `${price} kr`;
+}
+
+function getSavedTokens() {
+  try {
+    const tokens = JSON.parse(localStorage.getItem('bioTickets') || '[]');
+    return Array.isArray(tokens) ? tokens.filter((token) => typeof token === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+document.querySelector('#saved-tickets-button').addEventListener('click', async () => {
+  const list = document.querySelector('#saved-tickets-list');
+  const tokens = getSavedTokens();
+  savedTicketsDialog.showModal();
+  if (!tokens.length) {
+    list.innerHTML = '<p class="saved-empty">Inga biljetter är sparade på den här enheten ännu.</p>';
+    return;
+  }
+  list.innerHTML = '<p class="saved-empty">Hämtar biljetter...</p>';
+  try {
+    const response = await fetch('/api/tickets/recover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens }) });
+    if (!response.ok) throw new Error();
+    recoveredTickets = await response.json();
+    list.innerHTML = recoveredTickets.map((ticket, index) => `<article class="saved-ticket">
+      <strong>${escapeHtml(ticket.screening.title)}</strong>
+      <span>${formatter.format(new Date(ticket.screening.startsAt))} · stol ${ticket.seat} · ${priceLabel(ticket.screening.price)}</span>
+      <button class="button button-small" data-ticket-index="${index}">Visa igen</button>
+    </article>`).join('') || '<p class="saved-empty">Biljetterna kunde inte längre hittas.</p>';
+  } catch {
+    list.innerHTML = '<p class="saved-empty">Biljetterna kunde inte hämtas just nu. Försök igen.</p>';
+  }
+});
+
+document.querySelector('#saved-tickets-list').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-ticket-index]');
+  if (!button) return;
+  await drawTicket(recoveredTickets[Number(button.dataset.ticketIndex)]);
+  savedTicketsDialog.close();
+  ticketDialog.showModal();
+});
 
 document.querySelectorAll('.dialog-close').forEach((button) => button.addEventListener('click', () => button.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach((dialog) => dialog.addEventListener('click', (event) => {
@@ -223,7 +272,7 @@ notifyButton.addEventListener('click', async () => {
     const response = await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription }) });
     const result = await response.json();
     localStorage.setItem('bioPushEndpoint', result.endpoint);
-    const tokens = JSON.parse(localStorage.getItem('bioTickets') || '[]');
+    const tokens = getSavedTokens();
     if (tokens.length) {
       await fetch('/api/push/link-bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: result.endpoint, tokens }) });
     }

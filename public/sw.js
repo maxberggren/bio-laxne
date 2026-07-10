@@ -1,4 +1,4 @@
-const CACHE = 'bio-laxne-v1';
+const CACHE = 'bio-laxne-v2';
 const SHELL = ['/', '/styles.css', '/app.js', '/manifest.webmanifest', '/icon.svg', '/icon-192.png'];
 
 self.addEventListener('install', (event) => {
