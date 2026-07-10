@@ -136,32 +136,51 @@ function formatDateTime(value) {
   return `${parts.join('-')} ${time}`;
 }
 
+let scanCanvas;
 document.querySelector('#start-scan').addEventListener('click', async () => {
   if (stream) return stopScanner();
   scanResult.classList.add('hidden');
   try {
-    if (!('BarcodeDetector' in window)) throw new Error('Den här webbläsaren saknar QR-skanner. Använd Chrome eller klistra in koden nedan.');
-    const supported = await BarcodeDetector.getSupportedFormats();
-    if (!supported.includes('qr_code')) throw new Error('QR-skanning stöds inte på den här enheten.');
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('Den här webbläsaren kan inte öppna kameran. Klistra in biljettkoden nedan istället.');
+    let detector = null;
+    if ('BarcodeDetector' in window) {
+      const supported = await BarcodeDetector.getSupportedFormats().catch(() => []);
+      if (supported.includes('qr_code')) detector = new BarcodeDetector({ formats: ['qr_code'] });
+    }
+    if (!detector && typeof jsQR !== 'function') throw new Error('QR-läsaren kunde inte laddas. Klistra in biljettkoden nedan istället.');
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
     video.srcObject = stream;
     await video.play();
     scanner.classList.add('active');
     document.querySelector('#start-scan').textContent = 'Stoppa kameran';
-    const detector = new BarcodeDetector({ formats: ['qr_code'] });
-    scanTimer = setInterval(async () => {
-      try {
-        const codes = await detector.detect(video);
-        if (codes[0]?.rawValue) {
-          stopScanner();
-          await validateTicket(codes[0].rawValue);
-        }
-      } catch { /* The video may be between frames. */ }
-    }, 350);
+    scanTimer = setInterval(() => readFrame(detector), 300);
   } catch (error) {
     showScanResult('invalid', 'Kameran kunde inte starta', error.message);
   }
 });
+
+async function readFrame(detector) {
+  if (!stream || !video.videoWidth) return;
+  try {
+    let value = null;
+    if (detector) {
+      const codes = await detector.detect(video);
+      value = codes[0]?.rawValue || null;
+    } else {
+      scanCanvas = scanCanvas || document.createElement('canvas');
+      scanCanvas.width = video.videoWidth;
+      scanCanvas.height = video.videoHeight;
+      const context = scanCanvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
+      const image = context.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+      value = jsQR(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' })?.data || null;
+    }
+    if (value) {
+      stopScanner();
+      await validateTicket(value);
+    }
+  } catch { /* The video may be between frames. */ }
+}
 
 document.querySelector('#manual-scan').addEventListener('submit', async (event) => {
   event.preventDefault();
