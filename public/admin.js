@@ -30,6 +30,7 @@ function showDashboard() {
   loginPanel.classList.add('hidden');
   dashboard.classList.remove('hidden');
   loadAdminScreenings();
+  startScanner(true);
 }
 
 document.querySelector('#logout').addEventListener('click', async () => {
@@ -137,8 +138,8 @@ function formatDateTime(value) {
 }
 
 let scanCanvas;
-document.querySelector('#start-scan').addEventListener('click', async () => {
-  if (stream) return stopScanner();
+async function startScanner(auto) {
+  if (stream) return;
   scanResult.classList.add('hidden');
   try {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error('Den här webbläsaren kan inte öppna kameran. Klistra in biljettkoden nedan istället.');
@@ -155,8 +156,13 @@ document.querySelector('#start-scan').addEventListener('click', async () => {
     document.querySelector('#start-scan').textContent = 'Stoppa kameran';
     scanTimer = setInterval(() => readFrame(detector), 300);
   } catch (error) {
-    showScanResult('invalid', 'Kameran kunde inte starta', error.message);
+    if (!auto) showScanResult('invalid', 'Kameran kunde inte starta', error.message);
   }
+}
+
+document.querySelector('#start-scan').addEventListener('click', () => {
+  if (stream) return stopScanner();
+  startScanner(false);
 });
 
 async function readFrame(detector) {
