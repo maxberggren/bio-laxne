@@ -77,6 +77,7 @@ bookingForm.addEventListener('submit', async (event) => {
     if (!response.ok) throw new Error(result.error);
     const savedTickets = getSavedTokens();
     localStorage.setItem('bioTickets', JSON.stringify([...savedTickets, result.ticketToken].slice(-20)));
+    updateInstallCard();
     bookingDialog.close();
     await drawTicket(result);
     ticketDialog.showModal();
@@ -233,7 +234,14 @@ document.querySelectorAll('dialog').forEach((dialog) => dialog.addEventListener(
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 if (standalone || localStorage.getItem('bioInstalled')) showNotifyStep();
-if (localStorage.getItem('hideInstall') === 'true' || ('Notification' in window && Notification.permission === 'granted')) installCard.classList.add('hidden');
+updateInstallCard();
+
+function updateInstallCard() {
+  const dismissed = localStorage.getItem('hideInstall') === 'true';
+  const notificationsOn = 'Notification' in window && Notification.permission === 'granted';
+  const hasBooked = getSavedTokens().length > 0;
+  installCard.classList.toggle('hidden', dismissed || notificationsOn || !hasBooked);
+}
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
