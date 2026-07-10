@@ -175,7 +175,7 @@ dialog::backdrop { background: #080304e8; backdrop-filter: blur(6px); }
 .booking-details { font: 12px Arial, sans-serif; color: #704d3a; padding-bottom: 20px; border-bottom: 1px dashed #8b674e; margin-bottom: 22px; }
 .booking-details b { color: var(--wine); }
 label { display: block; text-transform: uppercase; letter-spacing: .12em; font: bold 10px Arial, sans-serif; }
-input, textarea { width: 100%; margin: 8px 0 18px; border: 1px solid #795740; color: #24130f; background: #fff8e9aa; padding: 13px; border-radius: 0; outline: none; }
+input, textarea { width: 100%; margin: 8px 0 18px; border: 1px solid #795740; color: #24130f; background: #fff8e9aa; padding: 13px; border-radius: 0; outline: none; font-size: 16px; }
 input:focus, textarea:focus { border-color: var(--red); box-shadow: 0 0 0 2px #a92e3122; }
 .form-error { min-height: 16px; margin: 12px 0 0; color: #8a1720; font: bold 11px Arial, sans-serif; text-align: center; }
 .ticket-dialog { width: min(540px, calc(100% - 18px)); color: var(--cream); background: #250c10; padding: 34px 28px; text-align: center; box-shadow: var(--shadow); }

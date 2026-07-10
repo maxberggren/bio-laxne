@@ -1,5 +1,5 @@
-const CACHE = 'bio-laxne-v6';
-const SHELL = ['/', '/styles.css?v=6', '/app.js?v=6', '/manifest.webmanifest', '/icon.svg', '/icon-192.png'];
+const CACHE = 'bio-laxne-v7';
+const SHELL = ['/', '/styles.css?v=7', '/app.js?v=7', '/manifest.webmanifest', '/icon.svg', '/icon-192.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => Promise.all(SHELL.map(async (url) => {
@@ -20,7 +20,7 @@ self.addEventListener('fetch', (event) => {
     const copy = response.clone();
     caches.open(CACHE).then((cache) => cache.put(event.request, copy));
     return response;
-  }).catch(() => caches.match(event.request).then((cached) => cached || caches.match('/'))));
+  }).catch(() => caches.match(event.request).then((cached) => cached || (event.request.mode === 'navigate' ? caches.match('/') : undefined))));
 });
 
 self.addEventListener('push', (event) => {
