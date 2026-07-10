@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="108" fill="#681b25"/>
+  <path d="M0 0h150c28 88 28 212 0 300L0 385zm512 0H362c-28 88-28 212 0 300l150 85z" fill="#9f2d35"/>
+  <circle cx="256" cy="246" r="145" fill="#efb84f"/>
+  <circle cx="256" cy="246" r="126" fill="#170a0b" stroke="#681b25" stroke-width="8"/>
+  <text x="256" y="280" text-anchor="middle" font-family="Georgia,serif" font-size="105" font-weight="bold" fill="#f4e7cc">BL</text>
+  <path d="M145 369h222" stroke="#efb84f" stroke-width="8" stroke-dasharray="10 12"/>
+  <text x="256" y="414" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" font-weight="bold" letter-spacing="7" fill="#f4e7cc">BIO LAXNE</text>
+</svg>

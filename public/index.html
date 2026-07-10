@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#170a0b">
+  <meta name="description" content="Bio Laxne - fyra stolar, stora världar.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+  <title>Bio Laxne</title>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Bio Laxne, startsida">
+      <span class="brand-mark">BL</span>
+      <span><b>BIO LAXNE</b><small>Fyra stolar. Oändliga världar.</small></span>
+    </a>
+    <a class="host-link" href="/admin.html">Värdingång</a>
+  </header>
+
+  <main>
+    <section class="stage" aria-labelledby="headline">
+      <div class="curtain curtain-left" aria-hidden="true"></div>
+      <div class="curtain curtain-right" aria-hidden="true"></div>
+      <div class="stage-copy">
+        <p class="eyebrow">I kvällens mörker</p>
+        <h1 id="headline">Välj ditt<br><i>äventyr</i></h1>
+        <p>En pytteliten salong för riktigt stora berättelser. Svep bland filmerna och knip en av våra fyra stolar.</p>
+      </div>
+      <div class="marquee" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </section>
+
+    <section class="programme" aria-labelledby="programme-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">På duken härnäst</p><h2 id="programme-title">Kommande visningar</h2></div>
+        <p class="swipe-hint">Svep för fler <span>→</span></p>
+      </div>
+      <div id="screenings" class="film-carousel" aria-live="polite">
+        <div class="loading-ticket">Ridån går strax upp...</div>
+      </div>
+    </section>
+
+    <section class="house-note">
+      <span class="ornament">✦</span>
+      <div><p class="eyebrow">Salongens lilla hemlighet</p><h2>Ingen dålig plats.<br>Bara fyra bra.</h2></div>
+      <p>Bio Laxne är en intim biografupplevelse där varje visning delas av högst fyra personer. Kom i tid, luta dig tillbaka och låt mörkret göra resten.</p>
+    </section>
+  </main>
+
+  <aside id="install-card" class="install-card" aria-labelledby="install-title">
+    <button class="install-close" aria-label="Stäng">×</button>
+    <div class="app-icon">BL</div>
+    <div><strong id="install-title">Ta med Bio Laxne</strong><p>Installera appen för nya filmer och påminnelser före föreställningen.</p></div>
+    <button id="install-button" class="button button-small">Lägg till</button>
+    <button id="notify-button" class="button button-small hidden">Slå på notiser</button>
+  </aside>
+
+  <dialog id="install-help" class="paper-dialog">
+    <button class="dialog-close" aria-label="Stäng">×</button>
+    <p class="eyebrow">Lägg till på hemskärmen</p>
+    <h2>Bio i fickan</h2>
+    <p>Öppna webbläsarens delningsmeny och välj <b>”Lägg till på hemskärmen”</b>. Öppna sedan Bio Laxne från den nya ikonen för att slå på notiser.</p>
+  </dialog>
+
+  <dialog id="booking-dialog" class="booking-dialog">
+    <button class="dialog-close" aria-label="Stäng">×</button>
+    <div id="booking-summary"></div>
+    <form id="booking-form">
+      <input type="hidden" name="screeningId">
+      <input type="hidden" name="seat">
+      <label>Ditt namn<input name="guestName" autocomplete="name" maxlength="80" minlength="2" required placeholder="Förnamn Efternamn"></label>
+      <button class="button button-wide" type="submit">Riv av min biljett</button>
+      <p class="form-error" role="alert"></p>
+    </form>
+  </dialog>
+
+  <dialog id="ticket-dialog" class="ticket-dialog">
+    <button class="dialog-close light" aria-label="Stäng">×</button>
+    <p class="eyebrow">Din plats i mörkret</p>
+    <h2>Biljetten är klar!</h2>
+    <p class="save-warning">Spara bilden nu. Du behöver visa QR-koden i dörren för att komma in.</p>
+    <canvas id="ticket-canvas" width="800" height="1280" aria-label="Din Bio Laxne-biljett"></canvas>
+    <a id="download-ticket" class="button button-wide" download="bio-laxne-biljett.png">Spara biljett som bild</a>
+    <button id="share-ticket" class="text-button hidden">Dela biljett</button>
+  </dialog>
+
+  <footer><span>Bio Laxne</span><i>✦</i><span>Fyra stolar sedan 2026</span></footer>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

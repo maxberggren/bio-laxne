@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#170a0b">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/admin.css">
+  <title>Värdingång | Bio Laxne</title>
+</head>
+<body class="admin-body">
+  <header class="masthead">
+    <a class="brand" href="/"><span class="brand-mark">BL</span><span><b>BIO LAXNE</b><small>Värdingången</small></span></a>
+    <a class="host-link" href="/">Till salongen</a>
+  </header>
+
+  <main class="admin-shell">
+    <section id="login-panel" class="login-panel">
+      <p class="eyebrow">Endast för biografvärdar</p>
+      <h1>Bakom ridån</h1>
+      <p>Här annonserar du filmer, får bokningsnotiser och släpper in kvällens gäster.</p>
+      <form id="login-form">
+        <label>Lösenord<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="button button-wide">Öppna värdingången</button>
+        <p class="form-error" role="alert"></p>
+      </form>
+    </section>
+
+    <div id="dashboard" class="dashboard hidden">
+      <div class="admin-title">
+        <div><p class="eyebrow">Bio Laxne</p><h1>God kväll,<br><i>biografvärd.</i></h1></div>
+        <div class="admin-actions"><button id="admin-notify" class="button">Få bokningsnotiser</button><button id="logout" class="text-button">Logga ut</button></div>
+      </div>
+
+      <div class="admin-grid">
+        <section class="admin-card scanner-card">
+          <div class="card-number">01</div>
+          <p class="eyebrow">Dörren</p>
+          <h2>Skanna biljett</h2>
+          <p>Rikta kameran mot gästens QR-kod. Varje biljett kan bara användas en gång.</p>
+          <div id="scanner" class="scanner">
+            <video id="scanner-video" playsinline muted></video>
+            <div class="scan-frame" aria-hidden="true"></div>
+            <span>kameran är släckt</span>
+          </div>
+          <button id="start-scan" class="button button-wide">Starta kameran</button>
+          <form id="manual-scan" class="manual-scan">
+            <label>eller klistra in biljettkod<input name="token" autocomplete="off"></label>
+            <button class="text-button">Kontrollera kod</button>
+          </form>
+          <div id="scan-result" class="scan-result hidden" aria-live="assertive"></div>
+        </section>
+
+        <section class="admin-card add-card">
+          <div class="card-number">02</div>
+          <p class="eyebrow">Programmet</p>
+          <h2>Ny visning</h2>
+          <p>När du publicerar får alla som aktiverat notiser veta att en ny film väntar.</p>
+          <form id="screening-form">
+            <label>Filmens titel<input name="title" required maxlength="120"></label>
+            <label>En lockande rad<textarea name="synopsis" rows="3" maxlength="600"></textarea></label>
+            <div class="form-row">
+              <label>Datum & tid<input name="startsAt" type="datetime-local" required></label>
+              <label>Minuter<input name="runtime" type="number" min="20" max="400" value="90" required></label>
+            </div>
+            <label class="poster-drop">Filmaffisch
+              <input name="poster" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required>
+              <span id="poster-name">Välj bild, max 8 MB</span>
+            </label>
+            <button class="button button-wide">Tänd upp på programmet</button>
+            <p class="form-error" role="alert"></p>
+          </form>
+        </section>
+      </div>
+
+      <section class="programme-list">
+        <div><p class="eyebrow">Överblick</p><h2>Alla visningar</h2></div>
+        <div id="admin-screenings"></div>
+      </section>
+    </div>
+  </main>
+  <script src="/admin.js" type="module"></script>
+</body>
+</html>
