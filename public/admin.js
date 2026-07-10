@@ -50,8 +50,13 @@ screeningForm.addEventListener('submit', async (event) => {
   button.disabled = true;
   error.textContent = '';
   try {
-    const startsAt = new Date(`${screeningForm.screeningDate.value}T${screeningForm.screeningTime.value}`);
-    if (Number.isNaN(startsAt.getTime())) throw new Error('Välj både datum och starttid.');
+    const dateParts = screeningForm.screeningDate.value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const timeParts = screeningForm.screeningTime.value.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (!dateParts || !timeParts) throw new Error('Ange datum som ÅÅÅÅ-MM-DD och tid som TT:mm, exempelvis 19:00.');
+    const startsAt = new Date(Number(dateParts[1]), Number(dateParts[2]) - 1, Number(dateParts[3]), Number(timeParts[1]), Number(timeParts[2]));
+    if (startsAt.getFullYear() !== Number(dateParts[1]) || startsAt.getMonth() !== Number(dateParts[2]) - 1 || startsAt.getDate() !== Number(dateParts[3])) {
+      throw new Error('Datumet finns inte. Använd formatet ÅÅÅÅ-MM-DD.');
+    }
     const data = new FormData(screeningForm);
     data.delete('screeningDate');
     data.delete('screeningTime');
@@ -76,7 +81,6 @@ function setScreeningDefaults() {
   const year = tomorrow.getFullYear();
   const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
   const day = String(tomorrow.getDate()).padStart(2, '0');
-  screeningForm.screeningDate.min = `${year}-${month}-${day}`;
   screeningForm.screeningDate.value = `${year}-${month}-${day}`;
   screeningForm.screeningTime.value = '19:00';
   screeningForm.runtime.value = 90;
