@@ -43,6 +43,23 @@ screeningForm.poster.addEventListener('change', () => {
   document.querySelector('#poster-name').textContent = screeningForm.poster.files[0]?.name || 'Välj bild, max 8 MB';
 });
 
+screeningForm.screeningDate.addEventListener('input', (event) => {
+  const digits = event.target.value.replace(/\D/g, '').slice(0, 8);
+  event.target.value = [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6, 8)].filter(Boolean).join('-');
+});
+
+screeningForm.screeningTime.addEventListener('input', (event) => {
+  const digits = event.target.value.replace(/\D/g, '').slice(0, 4);
+  event.target.value = digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
+});
+
+screeningForm.screeningTime.addEventListener('blur', (event) => {
+  const digits = event.target.value.replace(/\D/g, '');
+  if (digits.length === 1) event.target.value = `0${digits}:00`;
+  if (digits.length === 2) event.target.value = `${digits}:00`;
+  if (digits.length === 3) event.target.value = `0${digits[0]}:${digits.slice(1)}`;
+});
+
 screeningForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = screeningForm.querySelector('button[type="submit"]');

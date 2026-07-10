@@ -233,7 +233,7 @@ document.querySelectorAll('dialog').forEach((dialog) => dialog.addEventListener(
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 if (standalone || localStorage.getItem('bioInstalled')) showNotifyStep();
-if (localStorage.getItem('hideInstall') === 'true' || Notification.permission === 'granted') installCard.classList.add('hidden');
+if (localStorage.getItem('hideInstall') === 'true' || ('Notification' in window && Notification.permission === 'granted')) installCard.classList.add('hidden');
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
@@ -269,6 +269,7 @@ function showNotifyStep() {
 notifyButton.addEventListener('click', async () => {
   notifyButton.disabled = true;
   try {
+    if (!('Notification' in window) || !('PushManager' in window)) throw new Error('Notiser kräver att Bio Laxne först läggs till på hemskärmen och öppnas därifrån.');
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') throw new Error('Notiser tilläts inte. Du kan ändra det i webbläsarens inställningar.');
     const registration = await navigator.serviceWorker.ready;

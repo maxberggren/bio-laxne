@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --ink: #170a0b;
   --wine: #681b25;
   --red: #a92e31;
@@ -11,7 +12,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; background: var(--ink); overflow-x: hidden; }
 body {
   margin: 0;
   color: var(--cream);
@@ -20,6 +21,8 @@ body {
     repeating-linear-gradient(90deg, #120708 0 2px, #170a0b 2px 5px);
   font-family: Georgia, 'Times New Roman', serif;
   min-height: 100vh;
+  min-height: 100svh;
+  overflow-x: hidden;
 }
 button, input, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
@@ -217,6 +220,7 @@ footer i { color: var(--gold); }
 }
 
 @media (display-mode: standalone) {
+  body { min-height: 100dvh; }
   .masthead { padding-top: env(safe-area-inset-top); height: calc(72px + env(safe-area-inset-top)); }
 }
 
