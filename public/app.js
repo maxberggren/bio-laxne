@@ -10,8 +10,6 @@ let screenings = [];
 let recoveredTickets = [];
 let deferredInstall;
 
-const formatter = new Intl.DateTimeFormat('sv-SE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-
 async function loadScreenings() {
   try {
     const response = await fetch('/api/screenings');
@@ -35,7 +33,7 @@ function renderScreenings() {
         <img class="poster" src="${escapeHtml(screening.posterUrl)}" alt="Affisch för ${escapeHtml(screening.title)}">
         <span class="availability">${remaining ? `${remaining} ${remaining === 1 ? 'plats' : 'platser'} kvar` : 'Fullsatt'}</span>
       </div>
-      <div class="film-meta"><time datetime="${screening.startsAt}">${formatter.format(new Date(screening.startsAt))}</time><span>${screening.runtime} min · ${priceLabel(screening.price)}</span></div>
+      <div class="film-meta"><time datetime="${screening.startsAt}">${formatDateTime(screening.startsAt)}</time><span>${screening.runtime} min · ${priceLabel(screening.price)}</span></div>
       <h3>${escapeHtml(screening.title)}</h3>
       <p class="synopsis">${escapeHtml(screening.synopsis)}</p>
       <p class="seat-label">Tryck på din stol</p>
@@ -53,7 +51,7 @@ screeningsEl.addEventListener('click', (event) => {
   bookingForm.reset();
   bookingForm.screeningId.value = screening.id;
   bookingForm.seat.value = button.dataset.seat;
-  document.querySelector('#booking-summary').innerHTML = `<p class="eyebrow">En av fyra</p><h2>${escapeHtml(screening.title)}</h2><p class="booking-details">${formatter.format(new Date(screening.startsAt))} · <b>Stol ${button.dataset.seat}</b> · ${priceLabel(screening.price)}<br>Eventuellt biljettpris betalas med Swish i entrén.</p>`;
+  document.querySelector('#booking-summary').innerHTML = `<p class="eyebrow">En av fyra</p><h2>${escapeHtml(screening.title)}</h2><p class="booking-details">${formatDateTime(screening.startsAt)} · <b>Stol ${button.dataset.seat}</b> · ${priceLabel(screening.price)}<br>Eventuellt biljettpris betalas med Swish i entrén.</p>`;
   bookingDialog.showModal();
   setTimeout(() => bookingForm.guestName.focus(), 50);
 });
@@ -124,7 +122,7 @@ async function drawTicket(ticket) {
   fitText(context, ticket.screening.title.toUpperCase(), 400, 250, 60, 650);
   context.fillStyle = '#704d3a';
   context.font = 'bold 23px Arial';
-  context.fillText(formatter.format(new Date(ticket.screening.startsAt)).toUpperCase(), 400, 310);
+  context.fillText(formatDateTime(ticket.screening.startsAt), 400, 310);
   context.font = 'bold 18px Arial';
   context.fillStyle = '#681b25';
   context.fillText(ticket.screening.price === null || ticket.screening.price === undefined ? 'FRI ENTRÉ' : `${ticket.screening.price} KR · BETALAS MED SWISH I ENTRÉN`, 400, 337);
@@ -180,6 +178,13 @@ function priceLabel(price) {
   return price === null || price === undefined ? 'fri entré' : `${price} kr`;
 }
 
+function formatDateTime(value) {
+  const date = new Date(value);
+  const parts = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')];
+  const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${parts.join('-')} ${time}`;
+}
+
 function getSavedTokens() {
   try {
     const tokens = JSON.parse(localStorage.getItem('bioTickets') || '[]');
@@ -204,7 +209,7 @@ document.querySelector('#saved-tickets-button').addEventListener('click', async 
     recoveredTickets = await response.json();
     list.innerHTML = recoveredTickets.map((ticket, index) => `<article class="saved-ticket">
       <strong>${escapeHtml(ticket.screening.title)}</strong>
-      <span>${formatter.format(new Date(ticket.screening.startsAt))} · stol ${ticket.seat} · ${priceLabel(ticket.screening.price)}</span>
+      <span>${formatDateTime(ticket.screening.startsAt)} · stol ${ticket.seat} · ${priceLabel(ticket.screening.price)}</span>
       <button class="button button-small" data-ticket-index="${index}">Visa igen</button>
     </article>`).join('') || '<p class="saved-empty">Biljetterna kunde inte längre hittas.</p>';
   } catch {

@@ -276,6 +276,19 @@ app.post('/api/admin/screenings', requireAdmin, upload.single('poster'), async (
   res.status(201).json({ id: Number(result.lastInsertRowid) });
 });
 
+app.delete('/api/admin/screenings/:id', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Ogiltig visning.' });
+  const screening = db.prepare('SELECT poster_url FROM screenings WHERE id = ?').get(id);
+  if (!screening) return res.status(404).json({ error: 'Visningen finns inte.' });
+  db.prepare('DELETE FROM screenings WHERE id = ?').run(id);
+  if (screening.poster_url.startsWith('/uploads/')) {
+    const posterPath = path.join(uploadDir, path.basename(screening.poster_url));
+    if (fs.existsSync(posterPath)) fs.unlinkSync(posterPath);
+  }
+  res.json({ deleted: true });
+});
+
 app.post('/api/admin/validate', requireAdmin, (req, res) => {
   const token = String(req.body.token || '').trim();
   const booking = db.prepare(`SELECT b.*, s.title, s.starts_at, s.runtime FROM bookings b

@@ -40,6 +40,10 @@
 .admin-screening h3 { margin: 0 0 6px; font-size: 21px; font-weight: normal; }
 .admin-screening p { margin: 0; color: var(--muted); font: 11px Arial, sans-serif; }
 .seat-count { color: var(--gold); text-transform: uppercase; letter-spacing: .12em; font: bold 10px Arial, sans-serif; }
+.screening-actions { display: flex; align-items: end; flex-direction: column; gap: 11px; }
+.delete-screening { border: 0; border-bottom: 1px solid #b85d62; padding: 3px 0; color: #d98589; background: none; cursor: pointer; text-transform: uppercase; letter-spacing: .1em; font: bold 9px Arial, sans-serif; }
+.delete-screening:hover { color: #ffb3b6; border-color: #ffb3b6; }
+.delete-screening:disabled { opacity: .5; cursor: wait; }
 
 @media (max-width: 760px) {
   .admin-shell { padding: 45px 18px 100px; }
@@ -50,5 +54,5 @@
   .form-row { grid-template-columns: 1fr; gap: 0; }
   .admin-screening { grid-template-columns: 55px 1fr; }
   .admin-screening img { width: 55px; height: 70px; }
-  .seat-count { grid-column: 2; }
+  .screening-actions { grid-column: 2; align-items: start; }
 }

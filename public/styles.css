@@ -204,6 +204,7 @@ footer i { color: var(--gold); }
   .section-heading h2 { font-size: 30px; }
   .swipe-hint { font-size: 8px; }
   .film-carousel { grid-auto-columns: 78vw; gap: 24px; }
+  .poster-wrap { width: min(68vw, 320px); margin: 0 auto 52px; }
   .house-note { margin: 0 18px 100px; grid-template-columns: auto 1fr; gap: 20px; }
   .house-note > p:last-child { grid-column: 1 / -1; }
   .payment-note { margin: -45px 18px 55px; grid-template-columns: auto 1fr; gap: 15px; }

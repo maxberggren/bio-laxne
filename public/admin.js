@@ -8,7 +8,6 @@ const scanResult = document.querySelector('#scan-result');
 let scanTimer;
 let stream;
 
-const formatter = new Intl.DateTimeFormat('sv-SE', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 setScreeningDefaults();
 
 async function checkSession() {
@@ -89,9 +88,31 @@ async function loadAdminScreenings() {
   const screenings = await response.json();
   document.querySelector('#admin-screenings').innerHTML = screenings.map((item) => `<article class="admin-screening">
     <img src="${escapeHtml(item.posterUrl)}" alt="">
-    <div><h3>${escapeHtml(item.title)}</h3><p>${formatter.format(new Date(item.startsAt))} · ${item.runtime} min${item.price === null ? ' · fri entré' : ` · ${item.price} kr`}</p></div>
-    <span class="seat-count">${item.bookedSeats.length} av 4 bokade</span>
+    <div><h3>${escapeHtml(item.title)}</h3><p>${formatDateTime(item.startsAt)} · ${item.runtime} min${item.price === null ? ' · fri entré' : ` · ${item.price} kr`}</p></div>
+    <div class="screening-actions"><span class="seat-count">${item.bookedSeats.length} av 4 bokade</span><button class="delete-screening" data-screening-id="${item.id}" data-screening-title="${escapeHtml(item.title)}">Ta bort</button></div>
   </article>`).join('') || '<p>Inga visningar ännu.</p>';
+}
+
+document.querySelector('#admin-screenings').addEventListener('click', async (event) => {
+  const button = event.target.closest('.delete-screening');
+  if (!button) return;
+  const confirmed = confirm(`Ta bort ${button.dataset.screeningTitle}? Alla bokningar till visningen försvinner också.`);
+  if (!confirmed) return;
+  button.disabled = true;
+  const response = await fetch(`/api/admin/screenings/${button.dataset.screeningId}`, { method: 'DELETE' });
+  const result = await response.json();
+  if (!response.ok) {
+    button.disabled = false;
+    return alert(result.error || 'Visningen kunde inte tas bort.');
+  }
+  await loadAdminScreenings();
+});
+
+function formatDateTime(value) {
+  const date = new Date(value);
+  const parts = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')];
+  const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${parts.join('-')} ${time}`;
 }
 
 document.querySelector('#start-scan').addEventListener('click', async () => {

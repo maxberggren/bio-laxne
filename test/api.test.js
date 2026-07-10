@@ -90,3 +90,10 @@ test('unknown tickets are invalid', async () => {
   const response = await agent.post('/api/admin/validate').send({ token: 'not-a-real-ticket' }).expect(404);
   assert.equal(response.body.status, 'invalid');
 });
+
+test('admin can delete a screening and its bookings', async () => {
+  await agent.delete(`/api/admin/screenings/${screeningId}`).expect(200);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM screenings WHERE id = ?').get(screeningId).count, 0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM bookings WHERE screening_id = ?').get(screeningId).count, 0);
+  await agent.delete(`/api/admin/screenings/${screeningId}`).expect(404);
+});
