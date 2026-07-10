@@ -160,6 +160,13 @@ app.post('/api/push/subscribe', (req, res) => {
   db.prepare(`INSERT INTO subscriptions (endpoint, payload, role) VALUES (?, ?, ?)
     ON CONFLICT(endpoint) DO UPDATE SET payload = excluded.payload, role = excluded.role`).run(subscription.endpoint, JSON.stringify(subscription), safeRole);
   res.status(201).json({ endpoint: subscription.endpoint, role: safeRole });
+  if (safeRole === 'admin') {
+    void webpush.sendNotification(subscription, JSON.stringify({
+      title: 'Bokningsnotiser är på',
+      body: 'Du får en notis här så fort någon bokar en stol - även när appen är stängd.',
+      url: '/admin.html'
+    })).catch((error) => console.error('Confirm push failed:', error.message));
+  }
 });
 
 app.post('/api/push/link-bookings', (req, res) => {

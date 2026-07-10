@@ -219,15 +219,22 @@ document.querySelector('#admin-notify').addEventListener('click', async (event) 
   const button = event.currentTarget;
   button.disabled = true;
   try {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('Pushnotiser stöds inte här.');
+    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error(standalone
+        ? 'Pushnotiser stöds inte i den här webbläsaren.'
+        : 'På iPhone: lägg till Bio Laxne på hemskärmen, öppna appen därifrån och slå på notiserna här inifrån appen.');
+    }
     await navigator.serviceWorker.register('/sw.js');
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') throw new Error('Notiser tilläts inte.');
+    if (permission !== 'granted') throw new Error('Notiser tilläts inte. Slå på notiser för Bio Laxne i enhetens inställningar.');
     const registration = await navigator.serviceWorker.ready;
     const { publicKey } = await fetch('/api/push/public-key').then((response) => response.json());
     const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64Key(publicKey) });
     const response = await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription, role: 'admin' }) });
+    const result = await response.json();
     if (!response.ok) throw new Error('Notisen kunde inte aktiveras.');
+    if (result.role !== 'admin') throw new Error('Du är inte inloggad som värd längre. Logga in igen och slå på notiserna på nytt.');
     button.textContent = 'Bokningsnotiser är på';
   } catch (error) {
     alert(error.message);
